@@ -1,22 +1,35 @@
 # Nour Dental Clinic: appointment booking
 
-> **Concept project.** Nour Dental Clinic is fictional. The doctors, prices and appointments are demo data, and no messages are ever sent.
-
 A full-stack booking system for a small dental clinic. Patients book in a five-step flow with live availability. Staff manage the schedule from a protected dashboard.
 
-**Live demo:** https://nour-clinic-silk.vercel.app · **Admin demo:** `admin@nourdental.demo` / `NourDemo2026` (also shown on the login page)
+**[Live demo](https://nour-clinic-silk.vercel.app)** · **[Admin dashboard](https://nour-clinic-silk.vercel.app/admin)**
+
+| Demo admin login | |
+| --- | --- |
+| Email | `admin@nourdental.demo` |
+| Password | `NourDemo2026` |
+
+The credentials are also shown on the login page. Demo data resets daily.
+
+![Nour Dental Clinic home page](docs/screenshots/home.png)
+
+> **Concept project.** Nour Dental Clinic is fictional. The doctors, prices and appointments are demo data, and no messages are ever sent.
 
 ## Screenshots
 
-| Home | Booking: date & time | Confirmation |
-| --- | --- | --- |
-| ![Home](docs/screenshots/home.png) | ![Booking](docs/screenshots/booking.png) | ![Confirmation](docs/screenshots/confirmation.png) |
+| Booking: date & time | Confirmation |
+| --- | --- |
+| ![Booking step with day picker and time slots](docs/screenshots/booking.png) | ![Booking confirmation page](docs/screenshots/confirmation.png) |
 
-| Admin overview | Appointments | Working hours |
-| --- | --- | --- |
-| ![Overview](docs/screenshots/admin-overview.png) | ![Appointments](docs/screenshots/admin-appointments.png) | ![Hours](docs/screenshots/admin-hours.png) |
+| Admin overview | Admin appointments |
+| --- | --- |
+| ![Admin dashboard overview](docs/screenshots/admin-overview.png) | ![Admin appointments list](docs/screenshots/admin-appointments.png) |
 
-_(Placeholders: drop PNGs with these names into `docs/screenshots/`.)_
+| Admin working hours | Mobile booking (375px) |
+| --- | --- |
+| ![Dentists and working hours editor](docs/screenshots/admin-hours.png) | <img src="docs/screenshots/mobile-booking.png" alt="Booking flow on a 375px mobile screen" width="280"> |
+
+All patient data in the screenshots is fictional.
 
 ## Features
 
