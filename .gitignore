@@ -7,3 +7,8 @@ dist
 *.log
 coverage
 .DS_Store
+
+# Local agent tooling (installed by Vercel Marketplace)
+.agents
+.claude
+skills-lock.json
