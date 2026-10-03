@@ -4,7 +4,7 @@
 
 A full-stack booking system for a small dental clinic. Patients book in a five-step flow with live availability. Staff manage the schedule from a protected dashboard.
 
-**Live demo:** _see the repository's About section_ · **Admin demo:** `admin@nourdental.demo` / `NourDemo2026` (also shown on the login page)
+**Live demo:** https://nour-clinic-silk.vercel.app · **Admin demo:** `admin@nourdental.demo` / `NourDemo2026` (also shown on the login page)
 
 ## Screenshots
 
