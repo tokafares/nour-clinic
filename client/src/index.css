@@ -1,0 +1,60 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Newsreader', ui-serif, Georgia, serif;
+
+  --color-brand-50: #effaf8;
+  --color-brand-100: #d6f2ee;
+  --color-brand-200: #afe4dd;
+  --color-brand-300: #7ccfc6;
+  --color-brand-400: #47b3aa;
+  --color-brand-500: #26968f;
+  --color-brand-600: #0b7c77;
+  --color-brand-700: #0b6e6a;
+  --color-brand-800: #0f5250;
+  --color-brand-900: #113f3e;
+  --color-brand-950: #042726;
+
+  --color-ink: #12302f;
+  --color-mist: #f4f7f7;
+
+  --shadow-soft: 0 1px 2px rgb(16 48 47 / 0.04), 0 4px 16px -4px rgb(16 48 47 / 0.08);
+  --shadow-lift: 0 2px 4px rgb(16 48 47 / 0.05), 0 12px 32px -8px rgb(16 48 47 / 0.16);
+
+  --animate-fade-in: fade-in 0.25s ease-out both;
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-mist font-sans text-ink antialiased;
+  }
+  /* Keyboard users get a clear ring; mouse clicks don't leave an outline behind. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-brand-600);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
