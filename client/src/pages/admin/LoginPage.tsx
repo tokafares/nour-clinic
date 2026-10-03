@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { KeyRound, LockKeyhole } from 'lucide-react';
+import { KeyRound, LockKeyhole, RotateCcw } from 'lucide-react';
 import { loginSchema } from '@shared/schemas';
 import { api } from '../../lib/api';
 import { keys, useAdminSession } from '../../lib/queries';
@@ -96,6 +96,10 @@ export function LoginPage() {
             <dt>Password</dt>
             <dd className="font-mono text-ink">{DEMO_PASSWORD}</dd>
           </dl>
+          <p className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
+            <RotateCcw className="size-3.5" aria-hidden />
+            Demo data resets daily.
+          </p>
           <Button
             variant="secondary"
             size="sm"

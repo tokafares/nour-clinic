@@ -3,7 +3,6 @@ import { eq, sql } from 'drizzle-orm';
 import { addDays, toZonedDateString, zonedTimeToUtc } from '../../shared/time.js';
 import { computeSlots, type BusyInterval } from '../lib/slots.js';
 import { generateReference } from '../lib/reference.js';
-import { closeDb, getDb } from './client.js';
 import { admins, appointments, doctors, services, workingHours } from './schema.js';
 import type { Db } from './types.js';
 
@@ -90,7 +89,11 @@ const DEMO_PATIENTS = [
   ['Mohamed Ashraf', '01190123456'],
 ] as const;
 
-export async function seed(db: Db, opts: { now?: Date; demoAppointments?: boolean } = {}): Promise<void> {
+export interface SeedResult {
+  appointments: number;
+}
+
+export async function seed(db: Db, opts: { now?: Date; demoAppointments?: boolean } = {}): Promise<SeedResult> {
   const now = opts.now ?? new Date();
 
   const passwordHash = await bcrypt.hash(DEMO_ADMIN.password, 10);
@@ -115,21 +118,35 @@ export async function seed(db: Db, opts: { now?: Date; demoAppointments?: boolea
     await db.insert(workingHours).values(hours.map((h) => ({ ...h, doctorId: created.id })));
   }
 
-  if (opts.demoAppointments === false) return;
+  if (opts.demoAppointments === false) return { appointments: 0 };
   const [{ count } = { count: 0 }] = await db.select({ count: sql<number>`count(*)::int` }).from(appointments);
   if (count > 0) {
     console.log(`Skipping demo appointments (${count} already exist).`);
-    return;
+    return { appointments: 0 };
   }
-  await seedDemoAppointments(db, now);
+  return { appointments: await seedDemoAppointments(db, now) };
+}
+
+/**
+ * Wipes every demo table and seeds a fresh data set relative to `now`, atomically:
+ * visitors never see a half-empty clinic. Used by the daily cron reset.
+ */
+export async function resetDemoData(db: Db, now: Date = new Date()): Promise<SeedResult> {
+  return db.transaction(async (tx) => {
+    await tx.execute(
+      sql`truncate table ${appointments}, ${workingHours}, ${doctors}, ${services}, ${admins} restart identity cascade`,
+    );
+    return seed(tx, { now });
+  });
 }
 
 /** Spreads realistic demo appointments from 10 days ago to 10 days ahead so the dashboard has data. */
-async function seedDemoAppointments(db: Db, now: Date): Promise<void> {
+async function seedDemoAppointments(db: Db, now: Date): Promise<number> {
   const serviceRows = await db.select().from(services);
   const doctorRows = await db.select().from(doctors);
   const hourRows = await db.select().from(workingHours);
   const busy: BusyInterval[] = [];
+  const rows: (typeof appointments.$inferInsert)[] = [];
   const today = toZonedDateString(now);
   let n = 0;
 
@@ -154,7 +171,7 @@ async function seedDemoAppointments(db: Db, now: Date): Promise<void> {
         if (!slot) continue;
         const isPast = slot.endsAt.getTime() < now.getTime();
         const status = isPast ? (n % 9 === 0 ? 'no_show' : n % 7 === 0 ? 'cancelled' : 'completed') : n % 11 === 0 ? 'cancelled' : 'confirmed';
-        await db.insert(appointments).values({
+        rows.push({
           reference: generateReference(),
           serviceId: service.id,
           doctorId: doctor.id,
@@ -166,23 +183,15 @@ async function seedDemoAppointments(db: Db, now: Date): Promise<void> {
           endsAt: slot.endsAt,
           priceEgp: service.priceEgp,
           status,
-          createdAt: new Date(slot.startsAt.getTime() - 5 * 86_400_000),
+          // Booked a few days before the visit, but never in the future.
+          createdAt: new Date(Math.min(slot.startsAt.getTime() - 5 * 86_400_000, now.getTime() - (n % 48 + 1) * 3_600_000)),
         });
         if (status !== 'cancelled') busy.push({ doctorId: doctor.id, startsAt: slot.startsAt, endsAt: slot.endsAt });
         n++;
       }
     }
   }
-  console.log(`Inserted ${n} demo appointments.`);
+  if (rows.length > 0) await db.insert(appointments).values(rows);
+  return rows.length;
 }
 
-const isMain = process.argv[1]?.replace(/\\/g, '/').endsWith('server/db/seed.ts');
-if (isMain) {
-  seed(getDb())
-    .then(() => console.log(`Seed complete. Demo admin: ${DEMO_ADMIN.email} / ${DEMO_ADMIN.password}`))
-    .catch((err: unknown) => {
-      console.error(err);
-      process.exitCode = 1;
-    })
-    .finally(() => closeDb());
-}

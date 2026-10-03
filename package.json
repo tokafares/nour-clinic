@@ -11,8 +11,9 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file=.env server/db/migrate.ts",
-    "db:seed": "tsx --env-file=.env server/db/seed.ts",
-    "preview": "vite preview"
+    "db:seed": "tsx --env-file=.env server/db/run-seed.ts",
+    "preview": "vite preview",
+    "db:reset": "tsx --env-file=.env server/db/run-reset.ts"
   },
   "author": "",
   "license": "MIT",

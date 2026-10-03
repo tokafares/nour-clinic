@@ -34,6 +34,9 @@ _(Placeholders: drop PNGs with these names into `docs/screenshots/`.)_
 - Services: create, edit, hide/show and delete. Deleting is refused if the service has appointment history.
 - Dentists: edit weekly working hours.
 
+**Daily demo reset**
+- A Vercel Cron job calls `GET /api/cron/reset-demo` once a day (02:00 UTC, about 04:00–05:00 in Cairo). It wipes all demo tables and reseeds services, dentists, working hours, the demo admin and about 60 appointments spread from 10 days ago to 10 days ahead of the current date, all in one transaction. The admin login page says "Demo data resets daily."
+
 **Quality**
 - Responsive down to 375px, checked in the browser. Keyboard focus rings use `:focus-visible` only. lucide icons, no emoji.
 - Loading skeletons, empty states, error states with retry, and toasts.
@@ -115,6 +118,7 @@ All endpoints are under `/api`.
 | PUT / DELETE | `/admin/services/:id` | admin | Update / delete (409 if it has appointments) |
 | GET | `/admin/doctors` | admin | Dentists with hours |
 | PUT | `/admin/doctors/:id/hours` | admin | Replace weekly hours `{ hours: [{ weekday, startMin, endMin }] }` |
+| GET | `/cron/reset-demo` | `Authorization: Bearer $CRON_SECRET` | Wipe and reseed demo data (Vercel Cron). `401` without the secret, `503` if `CRON_SECRET` isn't set |
 
 ## Running locally
 
@@ -136,6 +140,7 @@ npm run dev                 # API on :3001, Vite on :5173 (proxies /api)
 | `npm run build` | Production build of the SPA into `dist/` |
 | `npm run db:generate` | Generate a migration after editing `server/db/schema.ts` |
 | `npm run db:migrate` / `db:seed` | Apply migrations / seed (idempotent; demo appointments only when the table is empty) |
+| `npm run db:reset` | Wipe and reseed the demo data (what the daily cron does) |
 
 ### Environment variables
 
@@ -143,13 +148,14 @@ npm run dev                 # API on :3001, Vite on :5173 (proxies /api)
 | --- | --- | --- |
 | `DATABASE_URL` | yes | Postgres connection string. On Neon, use the pooled URL with `sslmode=require`. |
 | `JWT_SECRET` | yes | At least 32 characters; signs admin session tokens. |
+| `CRON_SECRET` | for the reset | Bearer token for `/api/cron/reset-demo`. Vercel Cron sends it automatically. Without it, the endpoint is disabled. |
 
 `.env*` files are git-ignored. Only `.env.example` is committed.
 
 ### Deploying to Vercel
 
 1. Import the repo into Vercel (the production branch is `master`). `vercel.json` already sets the build, output and rewrites.
-2. Add `DATABASE_URL` and `JWT_SECRET` as environment variables.
+2. Add `DATABASE_URL`, `JWT_SECRET` and `CRON_SECRET` as environment variables. The cron schedule is in `vercel.json`.
 3. Run `npm run db:migrate && npm run db:seed` once against the production database.
 
 ## Decisions made
@@ -166,7 +172,8 @@ npm run dev                 # API on :3001, Vite on :5173 (proxies /api)
 - **Rate limiting is in-memory per function instance** (`@fastify/rate-limit`). That's fine for a demo; production would use a shared store such as Redis or the Vercel WAF.
 - **`bcryptjs`** (pure JS) instead of native `bcrypt`, to avoid native builds on Vercel. Login compares against a dummy hash for unknown emails, so timing doesn't reveal which accounts exist.
 - **Session cookie:** `httpOnly`, `SameSite=Lax`, `Secure` in production, 8-hour expiry. The SPA and API share an origin, so no CORS is needed.
-- **Demo credentials are public** on the login page, as requested for a concept project. Anyone can change the demo data, and reseeding restores it.
+- **Demo credentials are public** on the login page, as requested for a concept project. Anyone can change the demo data; the daily reset restores it.
+- **Daily reset with `TRUNCATE … RESTART IDENTITY` inside one transaction.** Visitors never see a half-empty clinic, and ids stay stable (dentist 1–3, service 1–5). The schedule is once a day so it works on the Hobby plan, which only allows daily crons with loose timing. The secret check uses a constant-time comparison, and the endpoint fails closed when `CRON_SECRET` is missing.
 - **Booking draft is kept in `sessionStorage`**, so a refresh mid-flow doesn't lose progress. Expired slots are dropped on reload.
 - **Tests use PGlite** (Postgres compiled to WASM, with `btree_gist`), so `npm test` runs the real migrations and constraint without any external database.
 - **Palette:** deep teal (`#0b6e6a`), white and soft slate grays, with Manrope for text and Newsreader for headings, to feel calm and clinical.

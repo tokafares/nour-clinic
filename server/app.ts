@@ -10,6 +10,7 @@ import { zodToAppError } from './validation.js';
 import { authPlugin } from './plugins/auth.js';
 import { publicRoutes } from './routes/public.js';
 import { adminRoutes } from './routes/admin.js';
+import { cronRoutes } from './routes/cron.js';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -27,6 +28,8 @@ export interface BuildAppOptions {
   /** Disable rate limiting (tests). */
   rateLimit?: boolean;
   secureCookies?: boolean;
+  /** Bearer secret required by the demo-reset cron endpoint; the endpoint is disabled without it. */
+  cronSecret?: string;
 }
 
 const errorBody = (code: string, message: string, details?: ApiErrorBody['error']['details']): ApiErrorBody => ({
@@ -89,6 +92,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<FastifyInstance> 
       api.get('/health', async () => ({ ok: true, time: app.now().toISOString() }));
       await api.register(publicRoutes, { rateLimit: opts.rateLimit ?? true });
       await api.register(adminRoutes, { prefix: '/admin', rateLimit: opts.rateLimit ?? true });
+      await api.register(cronRoutes, { prefix: '/cron', cronSecret: opts.cronSecret });
     },
     { prefix: '/api' },
   );

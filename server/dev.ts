@@ -6,6 +6,7 @@ const app = await buildApp({
   db: getDb(),
   jwtSecret: requireEnv('JWT_SECRET'),
   logger: true,
+  cronSecret: process.env.CRON_SECRET,
 });
 
 const port = Number(process.env.PORT ?? 3001);

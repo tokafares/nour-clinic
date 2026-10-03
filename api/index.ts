@@ -13,6 +13,7 @@ function getApp(): Promise<FastifyInstance> {
     db: getDb(),
     jwtSecret: requireEnv('JWT_SECRET'),
     secureCookies: true,
+    cronSecret: process.env.CRON_SECRET,
     logger: true,
   }).then(async (app) => {
     await app.ready();
